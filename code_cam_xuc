@@ -1,0 +1,133 @@
+from google.colab import drive
+drive.mount('/content/drive')
+#############
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from keras import datasets,Sequential,callbacks
+from keras.layers import Conv2D, Dense, MaxPooling2D, Flatten
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from keras.layers import Dense,Activation,BatchNormalization,Dropout
+from keras.models import Sequential
+from tensorflow.keras.utils import to_categorical
+from keras import callbacks
+from sklearn.metrics import precision_score, recall_score,confusion_matrix,classification_report,accuracy_score,f1_score
+from keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import RMSprop
+from matplotlib import scale
+############
+
+from sklearn.metrics import confusion_matrix
+from keras.utils import np_utils
+from keras.preprocessing.image import load_img, img_to_array,array_to_img,ImageDataGenerator, image
+import os
+
+cam_xuc = ['angry','disgusted','fearful','happy','neutral','sad','surprised'] 
+
+dir_train = '/content/drive/MyDrive/data_cam_xuc/' 
+
+listpath = []
+y_train = []
+x_train = []
+x_test = []
+y_test = []
+##############
+
+def create_data(dir, x_train, y_train):
+  for i in cam_xuc:
+    path = os.path.join(dir,i)
+    index_label = cam_xuc.index(i)
+    for j in os.listdir(path):
+      img_path = os.path.join(path, j)
+      img = image.load_img(img_path, target_size=(48,48))
+      img = img_to_array(img)
+      img = img.reshape(48,48,3) 
+      img = img.astype('float32')
+      img = img/255
+      x_train.append(img)
+      y_train.append(index_label)
+create_data(dir_train, x_train, y_train) 
+###########
+
+# xử lí dữ liệu
+x_train = np.array(x_train)
+y_train = np.array(y_train)
+y_train = np_utils.to_categorical(y_train, 12)
+print(x_train.shape)
+print(y_train.shape)
+
+# Initialising the CNN
+model = Sequential()
+
+# Step 1 - Convolution
+model.add(Conv2D(32, 3, 3, input_shape = (48, 48, 3), activation = 'relu'))
+
+# Step 2 - Pooling
+model.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Adding a second convolutional layer
+model.add(Conv2D(32, 3, 3, activation = 'relu'))
+model.add(MaxPooling2D(pool_size = (2, 2)))
+
+# Step 3 - Flattening
+model.add(Flatten())
+
+# Step 4 - Full connection
+model.add(Dense(128, activation = 'relu'))
+model.add(Dense(128, activation = 'relu'))
+model.add(Dense(128, activation = 'relu'))
+model.add(Dense( 12, activation = 'softmax'))
+
+# Compiling the CNN
+model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
+############
+
+history = model.fit(x_train,y_train,epochs=100,verbose = 1)
+##########
+
+model.save('cam_xuc.h5')
+#############
+
+from keras.models import load_model
+model = load_model('cam_xuc.h5')
+#############
+
+from sklearn.metrics import confusion_matrix
+from keras.utils import np_utils
+from keras.preprocessing.image import load_img, img_to_array,array_to_img,ImageDataGenerator, image
+import os
+############
+
+img = load_img('chien1.jpg', target_size=(48, 48))
+
+plt.imshow(img)
+
+img = img_to_array(img)
+
+img = img.reshape(1, 48, 48, 3)
+
+im = img.astype('float32')
+
+img /= 255
+
+a=np.argmax(model.predict(img), axis = -1)
+print(a)
+np.argmax(model.predict(img), axis = -1)
+
+if a == 0:
+  print("giận dữ")
+if a == 1:
+  print("gê tởm")
+if a == 2:
+  print("sợ hãi")
+if a == 3:
+  print("hạnh phúc")
+if a == 4:
+  print("bình thường")
+if a == 5:
+  print("buồn")
+if a == 6:
+  print("ngạc nhiên")
